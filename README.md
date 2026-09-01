@@ -1,0 +1,135 @@
+✍️ 智能英语作文批改系统
+一个基于 Python + Tkinter 的桌面应用，支持本地语法检查 + 大模型深度点评 + 修改后范文生成。
+
+🎯 核心功能
+功能	说明
+语法检查	拼写纠错、主谓一致、冠词 a/an、句首大写、句末标点、时态、中式英语检测
+多维评分	语法(30%) + 词汇(25%) + 结构(25%) + 内容(20%)
+修改建议	每个问题逐条给出具体修改方案
+统计分析	词数/句数/平均句长 + 高频词
+🤖 大模型点评	支持 OpenAI / DeepSeek / 通义千问 / 文心一言 / 自定义接口
+🔄 自动获取模型列表	点按钮自动从 /v1/models 获取可用模型，填充下拉框
+⚙️ 可编辑配置	用户可自行修改接口 URL、API Key、模型、超时时间
+📝 可编辑提示词	用户可在界面自定义「点评提示词」与「修改后范文提示词」
+✍️ 修改后范文	用固定提示词让 AI 点评后自动生成润色后的完整范文
+💾 本地保存	接口配置存到 config/api_config.json，提示词存到 config/prompts.json，均不上传
+🚀 快速开始
+1. 环境要求
+Python 3.8+（无需安装任何第三方包，仅用标准库）
+2. 运行
+# 进入项目目录
+cd essay_corrector
+
+# 先跑冒烟测试，确认环境 OK
+python smoke_test.py
+
+# 启动主程序
+python desktop_app.py
+或直接双击 run.bat。
+
+3. 使用流程
+在输入框粘贴/输入英语作文（或点「📋 示例作文」）
+点「🔍 开始批改」→ 查看评分、问题清单、原文标注
+（可选）点「⚙️ API 设置」配置大模型接口：
+选择服务商（自动填充默认 URL）
+填写 API Key
+点「🔄 获取模型列表」自动填充模型下拉框（也可手动输入）
+设置超时时间（建议 ≥ 120 秒）
+勾选「启用」→ 保存
+回到主界面 → 「🤖 大模型点评」页 → 「🚀 获取大模型点评」
+（可选）点「📝 提示词设置」自定义 AI 的点评方式与范文生成规则：
+💬 点评提示词：编辑角色设定 / System / User 模板（支持 {role} {essay} {issues} 占位符）
+✍️ 修改后范文（固定）：编辑固定提示词，控制 AI 点评后输出「修改说明 + 修改后的范文」
+点「♻️ 恢复默认」可重置，「💾 保存」后生效
+在「🤖 大模型点评」页点「✍️ 生成修改后范文」，即可看到 AI 生成的润色范文
+📝 关于「提示词设置」
+提示词与接口配置相互独立：提示词管"怎么问"，接口管"问谁"。
+
+提示词保存在 config/prompts.json，可自由修改；清空时自动回退为内置默认提示词。
+固定提示词：rewrite_system / rewrite_user 保证 AI 在点评后一定会输出修改后的范文 （含 ===== 修改说明 ===== 与 ===== 修改后的范文 ===== 两段结构）。
+可用占位符：{role}=角色设定、{essay}=作文原文、{issues}=本地已检出问题摘要。
+temperature / max_tokens 也在提示词设置里调整。
+🔑 关于「自动获取模型列表」
+程序会请求 OpenAI 兼容的 GET /v1/models 端点：
+
+✅ 支持：https://max.openai365.top、https://api.deepseek.com 等标准兼容接口
+⚠️ 不支持：部分中转站未实现该端点 → 界面会提示，可手动输入模型名
+URL 智能规范化：无论你填的是
+
+https://max.openai365.top/v1/chat/completions
+https://max.openai365.top/v1
+https://max.openai365.top
+程序都会自动裁剪为 .../v1/models 发起请求。
+
+⚙️ API 配置说明
+服务商	Key 填写格式	默认接口
+OpenAI	sk-xxx	https://api.openai.com/v1/chat/completions
+DeepSeek	sk-xxx	https://api.deepseek.com/v1/chat/completions
+通义千问	sk-xxx	https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+文心一言	client_id:client_secret	文心专用地址
+自定义	任意	你填的地址
+🗂️ 项目结构
+essay_corrector/
+├── desktop_app.py       # 🎯 主程序（Tkinter UI + 线程安全队列）
+├── grammar_checker.py   # 🔍 语法/拼写/表达检查
+├── scorer.py            # 📊 多维评分
+├── api_config.py        # ⚙️ 接口配置管理（保存/加载/校验/服务商预设）
+├── prompt_config.py     # 📝 提示词配置管理（默认 + 固定范文提示词 + 持久化）
+├── llm_feedback.py      # 🤖 API 调用 + 模型列表获取 + 范文生成
+├── settings_dialog.py   # 🔧 API 设置对话框（含模型列表获取 UI）
+├── prompt_dialog.py     # 🔧 提示词设置对话框（点评 + 范文提示词编辑）
+├── smoke_test.py        # 🧪 快速冒烟测试
+├── test_all.py          # 🧪 完整测试套件（34 项）
+├── run.bat              # 🪟 Windows 一键启动
+├── requirements.txt     # 依赖清单（标准库，基本为空）
+└── config/              # 📁 配置文件目录（首次保存后生成）
+    ├── api_config.json  #   接口配置
+    └── prompts.json     #   提示词配置
+🧪 测试
+# ① 全量语法编译检查（推荐先跑，最快验证所有文件无语法错误）
+python test_compile.py
+
+# ② 快速冒烟测试（验证语法引擎 + 评分）
+python smoke_test.py
+
+# ③ 完整回归测试（语法/导入/调用链/线程安全/方法单例/保存流程/模型上限裁剪）
+python test_regression.py
+
+# ④ 专项：保存功能 + max_tokens(6000) + 模型上限裁剪
+python test_save_and_tokens.py
+
+# ⑤ 专项：生成后范文标注真实生效 token
+python test_logic_units.py
+🔢 关于 max_tokens（范文长度 / 截断问题）
+max_tokens 是模型单次输出的最大 token 数，决定了「修改后范文」最多能生成多长。
+
+默认值已提到 6000，界面输入框上限放开到 16000（原为 4000，过短会导致范文被截断）。
+设置路径：「📝 提示词设置」→「✍️ 修改后范文（固定）」Tab → max_tokens 输入框。
+安全裁剪：不同模型对 max_tokens 有自身上限（常见 2048/4096，长文本模型可达 8192+）。 程序会根据你选的模型名自动裁剪到你设的值与模型上限的较小者，避免接口报 "max_tokens exceeds the model's maximum"。例如选 gpt-4o/deepseek/qwen-max 可到 8192， 未知模型保守按 4096。
+结果可见：每次生成范文后，结果开头会标注「（本次 max_tokens = 真实生效值）」， 你可以据此确认是否真的用上了 6000，还是被模型上限裁剪了。
+💡 若范文仍被截断：① 把 max_tokens 调到 6000~8000；② 确认所选模型的真实上限 （在服务商后台查看）；③ 作文特别长时，可让提示词要求「保持原文字数」。
+
+💾 关于「保存功能」（确认配置落盘）
+提示词对话框的保存流程已加固，确保点「💾 保存」后配置真的写入本地：
+
+保存路径：config/prompts.json（接口配置在 config/api_config.json）。
+保存时会：自动创建 config/ 目录 → 写入 JSON → 立刻回读校验，确认落盘成功才提示"已保存"。
+弹窗反馈：成功会显示 提示词配置已保存到本地 ✅（max_tokens = 实际值）； 失败会明确提示原因（权限不足 / 目录只读 / 回读校验失败）。
+即时生效：保存关闭窗口后，下一次点「🚀 获取大模型点评」或「✍️ 生成修改后范文」 会自动加载最新配置，无需重启程序。
+⚠️ 若你之前遇到"点了保存但没反应"：通常是 config/ 目录无写入权限，或旧版 Spinbox 上限(4000)把值卡住了。新版已放开上限并加了回读校验，保存后请留意弹窗提示的 max_tokens 值。
+
+⚠️ 常见问题
+Q: 点「获取大模型点评」一直转圈 / 报 "The read operation timed out"？ A: 大模型推理较慢，请在设置里把超时时间调到 120~300 秒。代码已用单一数值超时（≥120 秒）。
+
+Q: 「✍️ 生成修改后范文」结果被截断、不完整？ A: 这是 max_tokens 太小导致的。请打开「📝 提示词设置」→「✍️ 修改后范文（固定）」Tab， 把 max_tokens 调到 6000~8000（上限已放开到 16000）。生成结果开头会标注 「（本次 max_tokens = 真实值）」，若真实值 < 你设的值，说明被模型自身上限裁剪了， 可换用 gpt-4o/deepseek 等长文本模型（可达 8192）。
+
+Q: 「🔄 获取模型列表」失败？ A: 可能该中转站不支持 /v1/models 端点。此时请手动输入模型名（如 gpt-3.5-turbo），或联系服务商获取模型清单。
+
+Q: 报 No module named 'tkinter'？ A: Windows 官方 Python 安装包默认包含 tkinter。若缺失，重新运行安装包 → 勾选 "tcl/tk and IDLE"。
+
+Q: 修改提示词后不生效 / 感觉没保存？ A: 在「📝 提示词设置」中编辑后必须点「💾 保存」。新版保存时会回读校验，成功弹窗会显示 max_tokens = 实际值——请以弹窗里的数值为准确认落盘成功。若字段留空会自动回退为内置默认提示词。 保存后无需重启，下次调用自动加载最新配置。
+
+📄 适用场景
+《专业综合实训》课程项目
+Python + AI 应用开发练习
+轻量化桌面工具 demo
